@@ -789,33 +789,39 @@ set(handles.axes2, 'XMinorGrid','on', 'YMinorGrid','on');
 title(handles.axes2, sprintf('Control signal, step disturbance at %g s', t_dist*Ts));
 
 % --- Executes on button press in pushbutton1.
+%the following function is the call back of the updat plant
 function pushbutton1_Callback(hObject, eventdata, handles)%update plant only
 % hObject    handle to pushbutton1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 [Ts Bp Ap Hr Hs dist P Bm Am]=acquire_data(handles);
 
-
+%generating header file for the input at 2/6/2019
 input_file = fopen('input_file.h','w');
 fprintf(input_file, '#ifndef _INPUT_H_\n');
 
 fprintf(input_file, '#define _INPUT_H_\n');
 
+%defining the A vector entered by the user as an array
+%it's size defined by length() function
 fprintf(input_file, 'extern const float Ap[');
 fprintf(input_file, num2str(length(Ap)));
 fprintf(input_file, '];\n');
-
+%defining the B vector entered by the user as an array
+%it's size defined by length() function
 fprintf(input_file, 'extern const float Bp[');
 fprintf(input_file, num2str(length(Bp)));
 fprintf(input_file, '];\n');
-
+%defining the sampling time in the header file
 fprintf(input_file, 'extern const float Ts;\n');
 fclose(input_file);
-
+%generating source file to save the vales of the input at 3/6/2019
 input_file_c = fopen('input_file.c','w');
+%including the header file of the definitions
 fprintf(input_file_c, '#include \"input_file.h\"\n');
+%saving the values of the A vector from the user
 fprintf(input_file_c, 'const float Ap[]= {');
-
+%looping till the length of the vector
 for i=1 : length(Ap)
     if i == length(Ap)
         fprintf(input_file_c,' %f}; \n',Ap(i));
@@ -827,8 +833,9 @@ end
 
 fclose(input_file_c);
 input_file_c = fopen('input_file.c','a');
+%saving the values of the A vector from the user
 fprintf(input_file_c,'const float Bp[]= {');
-
+%looping till the length of the vector
 for i=1 : length(Bp)
     if i == length(Bp)
         fprintf(input_file_c,' %f}; \n',Bp(i));
@@ -839,30 +846,19 @@ for i=1 : length(Bp)
 end   
 
 input_file_c = fopen('input_file.c','a');
+%saving the value of the sampling time
 fprintf(input_file_c,'const float Ts= %f ; \n',Ts);
 fclose(input_file_c);
-%fprintf(input_file,'\n');
-%fprintf(input_file,'Bp = %f \t',[Bp;]);
-%fprintf(header_file,'B = %f\n',Ap(1));
-%fclose(input_file);
-%fprintf(header_file,'A = %f\n',Ap(2));
-%fclose(header_file);
-
-%header_file = fopen('header.h','a');
-%fprintf(header_file,'A = %f\n',Ap(2));
-%fclose(header_file);
 
 R=str2num(get(handles.edit17, 'string'));%full R S T values
 S=str2num(get(handles.edit18, 'string'));
 T=str2num(get(handles.edit19, 'string'));
 
-
-
-
 simulate_RST(Ts, Bp, Ap, R, S, T, Bm, Am, dist, handles);
 
 
 % --- Executes on button press in pushbutton2.
+%the following function is the callback of solve button
 function pushbutton2_Callback(hObject, eventdata, handles)%solve
 % hObject    handle to pushbutton2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -871,15 +867,19 @@ function pushbutton2_Callback(hObject, eventdata, handles)%solve
 zeta=str2double(get(handles.edit8, 'string'));
 w=str2double(get(handles.edit7, 'string'));
 input_file = fopen('input_file.h','a');
+%defining zeta in the header file in 6/6/2019
 fprintf(input_file,'extern const float zeta;\n');
 fclose(input_file);
+%saving the value of zeta in the source file
 input_file_c = fopen('input_file.c','a');
 fprintf(input_file_c,'const float zeta= %f ; \n',zeta);
 fclose(input_file_c);
 input_file = fopen('input_file.h','a');
+%defining w in header
 fprintf(input_file,'extern const float w;\n');
 fprintf(input_file,'#endif\n');
 fclose(input_file);
+%saving value of w in source file
 input_file_c = fopen('input_file.c','a');
 fprintf(input_file_c,'const float w= %f ; \n',w);
 fclose(input_file_c);
@@ -899,6 +899,7 @@ if S_has_integrator
 else
     Hs_full=Hs;
 end
+%filters
 A=conv(Ap, Hs_full)';
 B=conv(Bpu, Hr)';
 nA=size(A); nA=nA(1)-1;%vertical vector size, power of z = size-1
@@ -934,33 +935,33 @@ set(handles.edit17, 'string',['[' num2str(R) ']']);%full R S T values for Update
 set(handles.edit18, 'string',['[' num2str(S) ']']);
 set(handles.edit19, 'string',['[' num2str(T) ']']);
 
+%generating the output header file for RST
+%written in 9/6/2020
 output_file_h = fopen('output_file.h','w');
 fprintf(output_file_h, '#ifndef _RST_H_\n');
-
 fprintf(output_file_h, '#define _RST_H_\n');
-
+%Defining the R as an array
 fprintf(output_file_h, 'extern const float R[');
 fprintf(output_file_h, num2str(length(R)));
 fprintf(output_file_h, '];\n');
-
+%defining S as an array
 fprintf(output_file_h, 'extern const float S[');
 fprintf(output_file_h, num2str(length(S)));
 fprintf(output_file_h, '];\n');
-
+%defining T as an array
 fprintf(output_file_h, 'extern const float T[');
 fprintf(output_file_h, num2str(length(T)));
 fprintf(output_file_h, '];\n');
 fprintf(output_file_h, '#endif');
 fclose(output_file_h);
-
+%generating source file for the RST values
 output_file = fopen('output_file.c','w');
 fprintf(output_file, '#include \"output_file.h\"\n');
 fprintf(output_file,'const float R[]={');
-
+%looping till size of R to save all values
 for i=1 : length(R)
     if i == length(R)
         fprintf(output_file,' %f}; \n',R(i));
-        
     else
         fprintf(output_file,' %f,',R(i));
     end
@@ -969,6 +970,7 @@ fclose(output_file);
 
 output_file = fopen('output_file.c','a');
 fprintf(output_file,'const float S[]={');
+%looping till size of S to save all values
 for i=1 : length(S)
     if i == length(S)
         fprintf(output_file,' %f}; \n',S(i));
@@ -980,6 +982,7 @@ end
 fclose(output_file);
 
 output_file = fopen('output_file.c','a');
+%looping till size of T to save all values
 fprintf(output_file,'const float T[]={');
 for i=1 : length(T)
     if i == length(T)
@@ -994,6 +997,8 @@ simulate_RST(Ts, Bp, Ap, R, S, T, Bm, Am, dist, handles);
 
 
 % --- Executes on button press in pushbutton3.
+%the following function is the call back of solve
+%That automatically generates simulink model and the c code
 function pushbutton3_Callback(hObject, eventdata, handles)%generate Simulink model
 % hObject    handle to pushbutton3 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1004,26 +1009,26 @@ R=str2num(get(handles.edit17, 'string'));%full R S T values
 S=str2num(get(handles.edit18, 'string'));
 T=str2num(get(handles.edit19, 'string'));
 
-%global it_counter;
-%it_counter=it_counter+1;
 c=clock;
 name=sprintf('System_%d%02d%02d_%02d%02d_%02d', c(1), c(2), c(3), c(4), c(5), round(c(6)));
-%add_block('simulink/Subsystem','/Subsystem1');
-
 sim_time=100; t_ref=5; t_dist=50;
 str_Ts=num2str(Ts);
 x=0; y=0;
+%generating the whole system
 sys=new_system(name);
 set_param(name, 'stoptime',num2str(sim_time));
 x=x+0; y=y+100;%step position
+%creating subsystem of the controller
+%written in 10/6/2020
 add_block('simulink/Ports & Subsystems/Subsystem',[name '/Mysubsystem']);
 set_param([name '/Mysubsystem'],'Position',[380 87 480 180]);
+%making the subsystem of two inputs
 add_block('simulink/Ports & Subsystems/In1',[name '/Mysubsystem/In2']);
+%setting position
 set_param([name '/Mysubsystem/In2'],'Position',[1100 120 1150 150]);
 add_block('simulink/Sources/Step', [name '/Reference'], 'position',[x, y, x+30, y+30],...
     'time',num2str(t_ref*Ts), 'sampletime',str_Ts);
 x=x+30;%step width
-
 x=x+35;%spacing
 add_block('simulink/Discrete/Discrete Filter', [name '/Bm(z)//Am(z)'], 'position',[x, y, x+195, y+30],...
     'numerator',['[' num2str(Bm) ']'], 'denominator',['[' num2str(Am) ']'], 'sampletime',str_Ts);
@@ -1031,66 +1036,47 @@ x=x+195;%tracking width
 add_line(name, 'Reference/1', 'Bm(z)//Am(z)/1');
 
 x=x+35;%spacing
+%adding the T block of the controller in the subsystem
 add_block('simulink/Discrete/Discrete Filter', [name '/Mysubsystem/T(z)'], 'position',[x, y, x+195, y+30],...
     'numerator',['[' num2str(T) ']'], 'denominator','[1]', 'sampletime',str_Ts);
 x=x+195;%T width
 add_line(name, 'Bm(z)//Am(z)/1', 'Mysubsystem/1');
 add_line([name '/Mysubsystem'], 'In1/1','T(z)/1' );
 
-
 x=x+25;%spacing
 add_block('simulink/Math Operations/Sum', [name '/Mysubsystem/Sum1'], 'position',[x, y+5, x+20, y+5+20],...
     'inputs','|+-');
 x=x+20;%sum width
-%add_line(name, 'Mysubsystem/1', 'Sum1/1');
-
 x=x+20;%spacing
-%add_block('simulink/Discrete/Discrete Filter', [name '/Mysubsystem/1//Hs(z)'], 'position',[x, y, x+195, y+30],...
- %   'numerator','[1]', 'denominator',['[' num2str(Hs) ']'], 'sampletime',str_Ts);
 x=x+195;%Hs width
-%add_line([name '/Mysubsystem/'], 'Sum1/1', '1//Hs(z)/1');
-
 x=x+35;%spacing
+%adding the S block of the controller in the subsystem
 add_block('simulink/Discrete/Discrete Filter', [name '/Mysubsystem/1//S(z)'], 'position',[x, y, x+195, y+30],...
     'numerator','[1]', 'denominator',['[' num2str(S) ']'], 'sampletime',str_Ts);
 x=x+195;%S width
+%adding T to the sum to be added with R to give S
 add_line([name '/Mysubsystem'] , 'Sum1/1', '1//S(z)/1');
-%add_line([name '/Mysubsystem'] , '1//Hs(z)/1', '1//S(z)/1');
-%%%%add_line(name, '1//Hs(z)/1', '1//S(z)/1');
-%add_line([name '/Mysubsystem'], '1//S(z)/1','Out1/1' );
-
 add_line([name '/Mysubsystem'],'T(z)/1' ,'Sum1/1');
-
-%add_line([name '/Mysubsystem'] , '1//S(z)/1', 'Out1/1');
-
 x=x+330;%make space for possible continuous plant
 add_block('simulink/Math Operations/Sum', [name '/Sum2'], 'position',[x, y+5, x+20, y+5+20],...
     'inputs','++|');
 x=x+20;%sum width
-
 x=x-285;%return till after S
 if get(handles.checkbox1, 'value')%continuous plant
     add_block('simulink/Discrete/Zero-Order Hold', [name '/Zero-Order Hold'], 'position',[x, y, x+35, y+30]);
     x=x+35;%ZOH width
-    %add_line(name, '1//S(z)/1', 'Zero-Order Hold/1');
-    
     x=x+35;%spacing
     add_block('simulink/Continuous/Transport Delay', [name '/Plant Delay'], 'position',[x, y, x+30, y+30],...
         'delaytime',get(handles.edit2, 'string'));
     x=x+30;%delay width
-    %add_line(name, 'Zero-Order Hold/1', 'Plant Delay/1');
-    
     x=x+35;%spacing
     add_block('simulink/Continuous/Transfer Fcn', [name '/Gp(s)'], 'position',[x, y, x+120, y+30],...
         'numerator',get(handles.edit3,'string'), 'denominator',get(handles.edit4,'string'));
     x=x+120;%Gp width
-    %add_line(name, 'Plant Delay/1', 'Gp(s)/1');
-    %add_line(name, 'Gp(s)/1', 'Sum2/2');
 else%discrete plant
     add_block('simulink/Discrete/Discrete Filter', [name '/Bp(z)//Ap(z)'], 'position',[x, y+50, x+195, y+80],...
         'numerator',['[' num2str(Bp) ']'], 'denominator',['[' num2str(Ap) ']'], 'sampletime',str_Ts);
     x=x+195;%plant width
-    % I commented add_line(name, '1//S(z)/1', 'Bp(z)//Ap(z)/1');
     add_line(name, 'Mysubsystem/1', 'Bp(z)//Ap(z)/1');
     add_line(name, 'Bp(z)//Ap(z)/1', 'Sum2/2');
 end
@@ -1100,48 +1086,38 @@ x=x-135;%new branch
 add_block('simulink/Sources/Sine Wave', [name '/Disturbance'], 'position',[x, 0, x+30, 0+30],...
     'amplitude','-0.25', 'frequency',get(handles.edit16,'string'), 'phase','pi/2', 'sampletime',str_Ts);
 x=x+30;%disturbance width
-
 x=x+40;%spacing
 add_block('simulink/Continuous/Transport Delay', [name '/Disturbance Delay'], 'position',[x, 0, x+30, 0+30],...
     'delaytime',num2str(t_dist*Ts));
 x=x+30;%delay width
 add_line(name, 'Disturbance/1', 'Disturbance Delay/1');
 add_line(name, 'Disturbance Delay/1', 'Sum2/1');
-
 x=x+125;%spacing from dist. delay till mux
 add_block('simulink/Signal Routing/Mux', [name '/Mux'], 'position',[x, y-15, x+5, y-15+38]);
 x=x+5;%mux width
-
 x=x+35;%spacing
+%showing the output on a scope
 add_block('simulink/Sinks/Scope', [name '/Scope'], 'position',[x, y, x+30, y+32]);
-%add_line(name, '1//S(z)/1', 'Mux/1');
 add_line(name, 'Mysubsystem/1', 'Mux/1');
 add_line(name, 'Sum2/1', 'Mux/2');
 add_line(name, 'Sum2/1','Mysubsystem/2' );
 add_line(name, 'Mux/1', 'Scope/1');
-%el mo3ed el 3aml comment
-%add_line(name, 'Sum2/1', 'Scope/1');
-
 %feedback blocks
 x=x-465; y=y+110;%from scope left edge to R
+% the R block of the controller
 block_R=add_block('simulink/Discrete/Discrete Filter', [name '/Mysubsystem/R(z)'], 'position',[x, y, x+195, y+30],...
     'numerator',['[' num2str(R) ']'], 'denominator','[1]', 'sampletime',str_Ts, 'orientation','left');
-%all=get(get_param(block_R, 'handle'))
 x=x-195;%R width
-%add_line([name '/Mysubsystem'], 'In2/1','R(z)/1' );
 add_line([name '/Mysubsystem'], 'In2/1', 'R(z)/1');
-%add_line(name, 'Sum2/1', 'Mysubsystem/2');
 delete_line([name '/Mysubsystem'], 'In1/1','Out1/1' );
 add_line([name '/Mysubsystem'], '1//S(z)/1','Out1/1' );
 set_param([name '/Mysubsystem/Out1'],'Position',[1100 70 1150 100]);
 x=x-35;%spacing
-%add_block('simulink/Discrete/Discrete Filter', [name '/Mysubsystem/Hr(z)'], 'position',[x, y, x+195, y+30],...
- %   'numerator',['[' num2str(Hr) ']'], 'denominator','[1]', 'sampletime',str_Ts, 'orientation','left');
 x=x-195;
 add_line([name '/Mysubsystem'], 'R(z)/1', 'Sum1/2');
-%add_line([name '/Mysubsystem'], 'R(z)/1', 'Hr(z)/1');
-%add_line([name '/Mysubsystem'], 'Hr(z)/1)', 'Sum1/2');
-%add_line(name, 'R(z)/1)', 'Sum1/2');
+
+%Configration for microcontroller as cortex m in config file
+%Automatically generating c code
 Simulink.BlockDiagram.loadActiveConfigSet( name, 'config.m');
 rtwbuild([name '/Mysubsystem']);
 open_system(sys);
